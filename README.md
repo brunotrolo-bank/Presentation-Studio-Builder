@@ -7,74 +7,77 @@
 
 <p align="center">
   <img src="https://img.shields.io/github/stars/brunotrolo-bank/Presentation-Studio-Builder?style=flat-square&color=2D5BFF&label=stars" alt="Stars">
+  <img src="https://img.shields.io/badge/etapas%20guiadas-10-00B8D9?style=flat-square" alt="10 etapas guiadas">
   <img src="https://img.shields.io/badge/guias%20de%20refer%C3%AAncia-12-00B8D9?style=flat-square" alt="12 guias de referência">
   <img src="https://img.shields.io/badge/scripts%20de%20valida%C3%A7%C3%A3o-5-0A1A6B?style=flat-square" alt="5 scripts de validação">
   <img src="https://img.shields.io/badge/license-MIT-0A1A6B?style=flat-square" alt="MIT License">
   <img src="https://img.shields.io/badge/works%20with-Claude%20Code-0A1A6B?style=flat-square" alt="Works with Claude Code">
 </p>
 
+Skill do Claude para criar **apresentações HTML ao vivo de alto impacto visual** e **motion cinematográfico**, do briefing à entrega: narrativa em atos, direção de arte medida, slides como timelines GSAP com coreografia dirigida, player Studio para ritmo e narração para TTS.
 
-Skill do Claude para criar **apresentações HTML ao vivo de alto impacto visual** e **motion cinematográfico**, do briefing à entrega: estrutura narrativa por atos, direção de arte, slides animados com GSAP, player com modo Studio, validação determinística e roteiro de narração para TTS.
-
-O **Presentation Studio Builder** transforma um briefing em uma apresentação offline, controlada pelas setas, em que cada slide é uma pequena animação dirigida (Problema → Feixe/Agente → Transformação → Big Number + Carimbo). O método foi destilado de um projeto real de 25 slides em 7 atos, homologado ponto a ponto com o usuário, e cada regra existe porque evitou um retrabalho.
+O **Presentation Studio Builder** substitui sketches soltos e feedback em ping-pong por um pipeline estruturado de 10 etapas com portões de verificação. Cada slide é uma pequena animação dirigida (Problema → Feixe/Agente → Transformação → Big Number + Carimbo), validada deterministicamente. O método foi destilado de um projeto real de 25 slides em 7 atos, homologado ponto a ponto, e cada regra existe porque evitou um retrabalho.
 
 ---
 
-## Arquitetura do Fluxo
+## Fluxo de 10 Etapas
 
-A skill conduz 10 etapas, com portões de verificação entre elas. Cada etapa lê só os guias de referência de que precisa (divulgação progressiva).
+A skill conduz 10 etapas sequenciais com portões de verificação e loops fechados. Cada etapa lê apenas os guias de que precisa (divulgação progressiva).
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                  presentation-studio-builder (SKILL.md)         │
+│                 presentation-studio-builder (SKILL.md)          │
 └────────────────────────────┬────────────────────────────────────┘
                              │
         ┌────────────────────┼────────────────────┐
         ▼                    ▼                    ▼
-┌───────────────┐    ┌───────────────┐    ┌───────────────┐
-│  Briefing     │    │  Estrutura &  │    │  Style bible  │
-│  (Etapa 1)    │    │  Ledger (2)   │    │  & tokens (3) │
-└───────┬───────┘    └───────┬───────┘    └───────┬───────┘
-        └────────────────────┴────────────────────┘
+   ┌─────────┐         ┌──────────┐         ┌───────────┐
+   │Briefing │         │Estrutura │         │ Direção   │
+   │(Etapa 1)│         │  & Ledger│         │de arte(3) │
+   └────┬────┘         │(Etapa 2) │         └─────┬─────┘
+        └──────────────┴────┬─────┴────────────────┘
                              │
                     ┌────────▼────────┐
                     │  Scaffold (4)   │
+                    │ Projeto offline │
                     └────────┬────────┘
                              │
                     ┌────────▼────────┐
                     │ Slides por ato  │◄────────────┐
-                    │      (5)        │             │
-                    └────────┬────────┘             │ corrige
+                    │  (Etapa 5)      │             │ corrige
+                    └────────┬────────┘             │
                              │                      │
                     ┌────────▼────────┐             │
-                    │ Validação (6)   │─────────────┘
-                    │ lint · capturas │   loop até lint sem erros
-                    └────────┬────────┘   e rubrica ≥ 4
+                    │Validação (6)    │─────────────┘
+                    │lint·capture·QA  │  loop até 100%
+                    └────────┬────────┘
                              │
         ┌────────────────────┼────────────────────┐
         ▼                    ▼                    ▼
-┌───────────────┐    ┌───────────────┐    ┌───────────────┐
-│ Studio (7)    │    │ Motion (8)    │    │ Narração (9)  │
-│ ritmo/pausas  │    │ opcional      │    │ opcional      │
-└───────────────┘    └───────────────┘    └───────────────┘
+  ┌──────────┐       ┌────────────┐       ┌────────────┐
+  │Studio(7) │       │Motion (8)  │       │Narração (9)│
+  │ritmo/    │       │cinemato-   │       │roteiros    │
+  │pausas    │       │gráfico opt.│       │TTS opt.    │
+  └──────────┘       └────────────┘       └────────────┘
                              │
                     ┌────────▼────────┐
                     │ Auditoria (10)  │
+                    │ números·fontes  │
                     └─────────────────┘
 ```
 
 | Etapa | Responsabilidade | Guias acionados |
 |-------|------------------|-----------------|
-| **1 · Briefing** | Ocasião, duração, marca, resultados com fonte, proibições; leitura de 100% dos documentos e da errata | `01-discovery-and-brief` |
-| **2 · Estrutura** | Atos, tempo por slide, ledger, política de números, fundo por conteúdo | `02-storytelling-and-structure` |
-| **3 · Direção de arte** | Style bible (adjetivos, metáfora, paleta medida, material), temas claro/escuro/papel | `03-art-direction-and-themes` |
-| **4 · Scaffold** | Projeto estático e offline com engine, Studio, helpers e slides de exemplo | `05-engine-and-studio` |
-| **5 · Slides** | Cada slide é uma timeline GSAP pausada, em momentos; coreografia padrão | `04-motion-system`, `06-slide-authoring-guide` |
-| **6 · Validação** | `lint-deck` (regras determinísticas), capturas, folha de contato, console, navegação | `08-verification-and-qa` |
-| **7 · Studio** | Pausas automáticas/manuais, trechos de velocidade, ocultar slide, fundo por slide | `05-engine-and-studio` |
-| **8 · Motion** *(opcional)* | Abertura cinematográfica: 3D em papel (Three.js), ilustração animada ou vídeo de IA | `07-cinematic-intro-motion`, `11-motion-templates-and-licenses` |
-| **9 · Narração** *(opcional)* | Um arquivo por slide, tempo-alvo, fala por momento e "por que está na tela" | `09-narration-scripts` |
-| **10 · Auditoria** | Números × fontes, navegação, rubrica de qualidade | `08-verification-and-qa` |
+| **1 · Briefing** | Ocasião, duração, marca, resultados com fonte/estimativa, proibições; leitura 100% de documentos e errata | `01-discovery-and-brief` |
+| **2 · Estrutura** | Atos, orçamento de tempo, ledger (1 slide = 1 ideia + 1–3 números max), fundo por conteúdo | `02-storytelling-and-structure` |
+| **3 · Direção de arte** | Style bible: adjetivos, metáfora visual, paleta medida, material; temas claro/escuro/papel | `03-art-direction-and-themes` |
+| **4 · Scaffold** | Projeto estático offline: engine, Studio, helpers, 3 slides de exemplo, fontes, GSAP/Three.js locais | `05-engine-and-studio` |
+| **5 · Slides** | Cada slide é timeline GSAP pausada, em momentos (beats); coreografia Problema→Feixe→Transformação→Big Number | `04-motion-system`, `06-slide-authoring-guide` |
+| **6 · Validação** | `lint-deck` (regras determinísticas), `capture` (imagens), `contact-sheet` (folha visual), console, navegação | `08-verification-and-qa` |
+| **7 · Studio** | Pausas automáticas/manuais, trechos de velocidade, ocultar slide (numeração refeita), fundo por slide | `05-engine-and-studio` |
+| **8 · Motion** *(opt.)* | Abertura cinematográfica: 3D em papel (Three.js), ilustração animada sobre arte ou vídeo de IA | `07-cinematic-intro-motion`, `11-motion-templates-and-licenses` |
+| **9 · Narração** *(opt.)* | Um arquivo/slide, tempo-alvo, fala por momento, números extenso, "por que está na tela" | `09-narration-scripts` |
+| **10 · Auditoria** | Números vs. fontes, navegação completa, rubrica final | `08-verification-and-qa` |
 
 ---
 
@@ -101,10 +104,10 @@ A skill traz **12 guias de referência** e um exemplo de tema, lidos sob demanda
 
 ## Pré-requisitos
 
-- **Claude Code** (ou outro ambiente com suporte a skills)
-- **Node.js ≥ 18** — para os scripts de validação
-- **Chrome ou Chromium** — para capturas e teste de navegação (opcional: sem navegador, use só o lint e a revisão manual)
-- **Navegador moderno** — para abrir a apresentação gerada (offline, sem CDN)
+- **Claude Code** com suporte a skills
+- **Node.js ≥ 18** — para scripts de validação (`lint-deck`, `capture`, `contact-sheet`, `nav-test`)
+- **Chrome ou Chromium** — para capturas e teste de navegação (*opcional: sem navegador, use só lint e revisão manual*)
+- **Navegador moderno** — para abrir a apresentação gerada (HTML offline, sem CDN)
 
 ---
 
@@ -112,7 +115,7 @@ A skill traz **12 guias de referência** e um exemplo de tema, lidos sob demanda
 
 ### O que você precisa antes de rodar
 
-Um briefing: ocasião, duração, mensagem central e, se houver, a pasta com os documentos e o guia de marca. A skill lê tudo antes de planejar e pergunta o que faltar.
+Um **briefing**: ocasião, duração, mensagem central, resultados esperados com fonte. Opcionalmente, uma pasta com documentos de contexto, guia de marca ou imagens de referência. A skill lê tudo antes de planejar.
 
 ### Instalação
 
@@ -125,19 +128,21 @@ cd Presentation-Studio-Builder
 ### Para usar no Claude Code:
 
 ```bash
-# Pessoal (vale para todos os projetos)
+# Global (vale para todos os projetos)
 cp -r presentation-studio-builder ~/.claude/skills/
 
 # Ou por projeto
 cp -r presentation-studio-builder <seu-projeto>/.claude/skills/
 
-# Dependência dos scripts (uma vez)
+# Instale as dependências dos scripts (uma vez)
 npm install --prefix ~/.claude/skills/presentation-studio-builder/scripts
 ```
 
-No Windows, a pasta pessoal é `C:\Users\<usuário>\.claude\skills\`. Reinicie a sessão ou rode `/reload-skills`; a skill carrega automaticamente quando você pede uma apresentação, um deck, um motion de abertura ou um roteiro de fala. Chrome fora do caminho padrão: defina `CHROME_PATH`.
+No Windows, a pasta de skills pessoal é `C:\Users\<usuário>\.claude\skills\`. Reinicie a sessão do Claude Code ou rode `/reload-skills`; a skill carrega automaticamente ao solicitar uma apresentação, deck, motion ou narração. Se Chrome está fora do caminho padrão, defina a env var `CHROME_PATH`.
 
-Para o claude.ai, compacte a pasta `presentation-studio-builder/` em um `.zip` (a pasta na raiz do arquivo) e envie em Configurações > Capacidades > Skills. Lá não há Chrome: use só o lint e a revisão manual.
+#### Para o claude.ai
+
+Compacte a pasta `presentation-studio-builder/` em um `.zip` (com a pasta na raiz) e envie em **Configurações > Capacidades > Skills**. Nota: não há Chrome; use só lint e revisão manual.
 
 ---
 
